@@ -6,7 +6,6 @@ Sample usage shown by running with "--help"
 
 Copyright (c) 2009-2011, Gregory Smith
 """
-
 import sys
 import os
 import datetime
@@ -24,15 +23,15 @@ try:
     def Win32Memory():
         class memoryInfo(Structure):
             _fields_ = [
-              ('dwLength', c_ulong),
-              ('dwMemoryLoad', c_ulong),
-              ('dwTotalPhys', c_ulong),
-              ('dwAvailPhys', c_ulong),
-              ('dwTotalPageFile', c_ulong),
-              ('dwAvailPageFile', c_ulong),
-              ('dwTotalVirtual', c_ulong),
-              ('dwAvailVirtual', c_ulong)
-              ]
+                ('dwLength', c_ulong),
+                ('dwMemoryLoad', c_ulong),
+                ('dwTotalPhys', c_ulong),
+                ('dwAvailPhys', c_ulong),
+                ('dwTotalPageFile', c_ulong),
+                ('dwAvailPageFile', c_ulong),
+                ('dwTotalVirtual', c_ulong),
+                ('dwAvailVirtual', c_ulong)
+            ]
 
         mi = memoryInfo()
         mi.dwLength = sizeof(memoryInfo)
@@ -43,7 +42,6 @@ except:
     # TODO For pre-2.5, and possibly replacing the above in all cases, you
     # can grab this from the registry via _winreg (standard as of 2.0) looking
     # at "HARDWARE\RESOURCEMAP\System Resources\Physical Memory"
-    # see http://groups.google.com/groups?hl=en&lr=&client=firefox-a&threadm=b%25B_8.3255%24Dj6.2964%40nwrddc04.gnilink.net&rnum=2&prev=/groups%3Fhl%3Den%26lr%3D%26client%3Dfirefox-a%26q%3DHARDWARE%255CRESOURCEMAP%255CSystem%2BResources%255CPhysical%2BMemory%26btnG%3DSearch
     pass
 
 
@@ -68,6 +66,7 @@ def total_mem():
     except:
         return None
 
+
 def binaryround(value):
     """
     Keeps the 4 most significant binary bits, truncates the rest so
@@ -82,6 +81,7 @@ def binaryround(value):
         value = int(value / 2)
         multiplier = multiplier * 2
     return multiplier * value
+
 
 class PGConfigLine(object):
     """
@@ -98,6 +98,7 @@ class PGConfigLine(object):
       raw : string  This is the actual value
       delimiter (expectations are '' and "")
     """
+
     def __init__(self, line, num=0):
         self.original_line = line
         self.line_number = num
@@ -156,9 +157,9 @@ class PGConfigLine(object):
         return self.sets_parameter
 
     def __str__(self):
-        result = ['%s sets=%s' %(self.line_number, self.sets_parameter)]
+        result = ['%s sets=%s' % (self.line_number, self.sets_parameter)]
         if self.sets_parameter:
-            result.append('%s=%s' %(self.name, self.value))
+            result.append('%s=%s' % (self.name, self.value))
             # TODO:  Include comment_section, readable,raw, delimiter
         result.append('original_line:  %s' % self.original_line)
         return ' '.join(result)
@@ -171,7 +172,8 @@ class PGConfigFile(object):
     There are two main structures here:
 
     config_lines[]:  Array of PGConfigLine entries for each line in the file
-    param_to_line:  Dictionary mapping parameter names to the line that set them
+    param_to_line:  Dictionary mapping parameter names to the line that set
+    them
     """
 
     def __init__(self, filename):
@@ -211,7 +213,8 @@ class PGConfigFile(object):
         """
         current = self.settings.boot_val(name)
         if name in self.param_to_line:
-            current = self.settings.parse(name, self.param_to_line[name].value())
+            current = self.settings.parse(name,
+                                          self.param_to_line[name].value())
         current = current.strip()
         return current
 
@@ -232,7 +235,7 @@ class PGConfigFile(object):
         """
         return None
 
-    def identify_session(self,text):
+    def identify_session(self, text):
         """
         Add a header to the values that are about to be changed
         saying what program was responsible.  The (unchecked) requirement
@@ -258,7 +261,7 @@ class PGConfigFile(object):
         # TODO Clamp the new value against the min and max for this setting
         #print name,"min=",settings.min_val(name),"max=",settings.max_val(name)
 
-        text = "%s = %s" %(name, value)
+        text = "%s = %s" % (name, value)
         new_line = PGConfigLine(text)
         new_line.process_line()
 
@@ -280,23 +283,24 @@ class PGConfigFile(object):
 
     def update_if_larger(self, name, value):
         if name in self.param_to_line:
-            # TODO This comparison needs all the values converted to numeric form
-            # and converted to the same scale before it will work
-            if (True):  #newValue > self.param_to_line[name].value():
+            # TODO This comparison needs all the values converted to numeric
+            # form and converted to the same scale before it will work
+            if (True):  # newValue > self.param_to_line[name].value():
                 self.update_setting(name, value)
 
     def write(self, fout):
-        fout.writelines(['%s\n' % line.original_line for line in self.config_lines])
+        fout.writelines(
+            ['%s\n' % line.original_line for line in self.config_lines])
 
     def debug_print_input(self):
-        print "Original file:"
+        print("Original file:")
         for l in self.config_lines:
-            print str(l)
+            print(str(l))
 
     def debug_print_settings(self):
-        print "Settings listing:"
+        print("Settings listing:")
         for k, line in self.param_to_line.items():
-            print '%s = %s' %(k, line.value())
+            print('%s = %s' % (k, line.value()))
 
 
 class PGSettings(object):
@@ -326,25 +330,31 @@ class PGSettings(object):
         if platform.architecture()[0] == "64bit":
             platform_bits = 64
 
-        settings_filename = "pg_settings-" + str(self.pg_version) + "-" + str(platform_bits)
+        settings_filename = "pg_settings-" + str(self.pg_version) + "-" + str(
+            platform_bits)
 
         # TODO Support handling versions other than 8.4
         # TODO Allow passing in platform bit size
         setting_dump_file = os.path.join(self.settings_dir, settings_filename)
         setting_columns = ["name", "setting", "unit", "category", "short_desc",
-                          "extra_desc", "context", "vartype", "min_val", "max_val", "enumvals",
-                          "boot_val"]
-        reader = csv.DictReader(open(setting_dump_file), setting_columns, delimiter="\t")
+                           "extra_desc", "context", "vartype", "min_val",
+                           "max_val", "enumvals",
+                           "boot_val"]
+        reader = csv.DictReader(open(setting_dump_file), setting_columns,
+                                delimiter="\t")
         for d in reader:
             # Convert nulls into blanks
             for key in d.keys():
                 if d[key] == '\\N':
                     d[key] = ""
 
-            # Memory units must be specified in some number of kB (never a larger
-            # unit).  Typically they are either "kB" for 1kB or "8kB", unless someone
+            # Memory units must be specified in some number of kB (never a
+            # larger
+            # unit).  Typically they are either "kB" for 1kB or "8kB",
+            # unless someone
             # compiled the server with a larger database or xlog block size
-            # (BLCKSZ/XLOG_BLCKSZ).  This code has no notion that such a thing is
+            # (BLCKSZ/XLOG_BLCKSZ).  This code has no notion that such a
+            # thing is
             # possible though.
             d['memory_unit'] = d['unit'].endswith('kB')
             if d['memory_unit']:
@@ -359,7 +369,7 @@ class PGSettings(object):
 
     def debug_print_settings(self):
         for key in self.param_to_dict.keys():
-            print "key=", key, " value=", self.param_to_dict[key]
+            print("key=", key, " value=", self.param_to_dict[key])
 
     def min_val(self, setting):
         return (self.param_to_dict[setting])['min_val']
@@ -387,9 +397,11 @@ class PGSettings(object):
         s = self.param_to_dict[name]
 
         if s['memory_unit']:
-            # Use the same logic as the GUC code that implements "SHOW".  This uses
+            # Use the same logic as the GUC code that implements "SHOW".
+            # This uses
             # larger units only if there's no loss of resolution in displaying
-            # with that value.  Therefore, if using this to output newly assigned
+            # with that value.  Therefore, if using this to output newly
+            # assigned
             # values, that value needs to be rounded appropriately if you want
             # it to show up as an even number of MB or GB
             if (value % KB_PER_GB == 0):
@@ -402,7 +414,8 @@ class PGSettings(object):
                 unit = "kB"
             formatted = str(value) + unit
 
-        # print >> sys.stderr,"Showing",name,"with value",value,"gives",formatted
+        # print >> sys.stderr,"Showing",name,"with value",value,"gives",
+        # formatted
         return formatted
 
     def parse_int(self, name, value):
@@ -463,18 +476,22 @@ def wizard_tune(config, options, settings):
     db_type = options.db_type.lower()
 
     # Save all settings to be updated as (setting,value) dictionary values
-    s = {}
+    s = dict()
     try:
-        s['max_connections'] = {'web':200, 'oltp':300, 'dw':20, 'mixed':80, 'desktop':5}[db_type]
+        s['max_connections'] = dict(web=200,
+                                    oltp=300,
+                                    dw=20,
+                                    mixed=80,
+                                    desktop=5)[db_type]
     except KeyError:
-        print "Error:  unexpected setting for db_type"
+        print("Error:  unexpected setting for db_type")
         sys.exit(1)
 
     # Now that we've screened for that, we know we've got a good db_type and
     # don't have to wrap the rest of these settings in an try block
 
     # Allow overriding the maximum connections
-    if options.connections != None:
+    if options.connections is not None:
         s['max_connections'] = options.connections
 
     # Estimate memory on this system via parameter or system lookup
@@ -482,7 +499,7 @@ def wizard_tune(config, options, settings):
     if total_memory is None:
         total_memory = total_mem()
     if total_memory is None:
-        print "Error:  total memory not specified and unable to detect"
+        print("Error:  total memory not specified and unable to detect")
         sys.exit(1)
 
     # Memory allocation
@@ -496,17 +513,29 @@ def wizard_tune(config, options, settings):
             # TODO Adjust shared_buffers for Windows
             pass
         else:
-            s['shared_buffers'] = {'web':mem / 4, 'oltp':mem / 4, 'dw':mem / 4,
-                                   'mixed':mem / 4, 'desktop':mem / 16}[db_type]
+            s['shared_buffers'] = dict(web=mem / 4,
+                                       oltp=mem / 4,
+                                       dw=mem / 4,
+                                       mixed=mem / 4,
+                                       desktop=mem / 16)[db_type]
 
-        s['effective_cache_size'] = {'web':mem * 3 / 4, 'oltp':mem * 3 / 4, 'dw':mem * 3 / 4,
-                                     'mixed':mem * 3 / 4, 'desktop':mem / 4}[db_type]
+        s['effective_cache_size'] = dict(web=mem * 3 / 4,
+                                         oltp=mem * 3 / 4,
+                                         dw=mem * 3 / 4,
+                                         mixed=mem * 3 / 4,
+                                         desktop=mem / 4)[db_type]
 
-        s['work_mem'] = {'web':mem / con, 'oltp':mem / con,'dw':mem / con / 2,
-                         'mixed':mem / con / 2,'desktop':mem / con / 6}[db_type]
+        s['work_mem'] = dict(web=mem / con,
+                             oltp=mem / con,
+                             dw=mem / con / 2,
+                             mixed=mem / con / 2,
+                             desktop=mem / con / 6)[db_type]
 
-        s['maintenance_work_mem'] = {'web':mem / 16, 'oltp':mem / 16,'dw':mem / 8,
-                                   'mixed':mem / 16,'desktop':mem / 16}[db_type]
+        s['maintenance_work_mem'] = dict(web=mem / 16,
+                                         oltp=mem / 16,
+                                         dw=mem / 8,
+                                         mixed=mem / 16,
+                                         desktop=mem / 16)[db_type]
 
         # Cap maintenence RAM at 1GB on servers with lots of memory
         # (Remember that the setting is in terms of kB here)
@@ -518,11 +547,17 @@ def wizard_tune(config, options, settings):
         pass
 
     # Checkpoint parameters
-    s['checkpoint_segments'] = {'web':8, 'oltp':16, 'dw':64,
-                                'mixed':16, 'desktop':3}[db_type]
+    s['checkpoint_segments'] = dict(web=8,
+                                    oltp=16,
+                                    dw=64,
+                                    mixed=16,
+                                    desktop=3)[db_type]
 
-    s['checkpoint_completion_target'] = {'web':0.7, 'oltp':0.9, 'dw':0.9,
-                                         'mixed':0.9, 'desktop':0.5}[db_type]
+    s['checkpoint_completion_target'] = dict(web=0.7,
+                                             oltp=0.9,
+                                             dw=0.9,
+                                             mixed=0.9,
+                                             desktop=0.5)[db_type]
 
     s['wal_buffers'] = 512 * s['checkpoint_segments']
 
@@ -532,17 +567,28 @@ def wizard_tune(config, options, settings):
         # Until that version can be singled out, the default for
         # constraint_exclusion ('partition') starting in 8.4 is the right
         # setting for every system type.
-        s['constraint_exclusion'] = {'web':'off', 'oltp':'off', 'dw':'on',
-                                     'mixed':'on', 'desktop':'off'}[db_type]
+        s['constraint_exclusion'] = dict(web='off',
+                                         oltp='off',
+                                         dw='on',
+                                         mixed='on',
+                                         desktop='off')[db_type]
 
-    s['default_statistics_target'] = {'web':100, 'oltp':100, 'dw':500,
-                                      'mixed':100, 'desktop':100}[db_type]
+    s['default_statistics_target'] = dict(web=100,
+                                          oltp=100,
+                                          dw=500,
+                                          mixed=100,
+                                          desktop=100)[db_type]
 
     # Header to identify when the program ran, before any new settings
-    config.identify_session("#------------------------------------------------------------------------------")
-    config.identify_session("# pgtune wizard run on %s" % (datetime.date.today()))
-    config.identify_session("# Based on %s KB RAM in the server" % mem )
-    config.identify_session("#------------------------------------------------------------------------------")
+    config.identify_session(
+        "#--------------------------------------------------------------------"
+        "----------")
+    config.identify_session(
+        "# pgtune wizard run on %s" % (datetime.date.today()))
+    config.identify_session("# Based on %s KB RAM in the server" % mem)
+    config.identify_session(
+        "#-------------------------------------------------------------------"
+        "-----------")
     config.identify_session("")
 
     # Write the new settings out
@@ -552,7 +598,7 @@ def wizard_tune(config, options, settings):
         # function doesn't need to be passed settings
         if settings.memory_unit(key):
             value = binaryround(s[key])
-        # TODO Add show method to config class for similar reasons
+            # TODO Add show method to config class for similar reasons
         config.update_setting(key, settings.show(key, value))
 
 
@@ -561,39 +607,48 @@ def read_options(program_args):
                                    version="0.9.4b",
                                    conflict_handler="resolve")
 
-    parser.add_option('-i', '--input-config', dest="input_config", default=None,
+    parser.add_option('-i', '--input-config', dest="input_config",
+                      default=None,
                       help="Input configuration file")
 
-    parser.add_option('-o', '--output-config', dest="output_config", default=None,
-                      help="Output configuration file, defaults to standard output")
+    parser.add_option('-o', '--output-config', dest="output_config",
+                      default=None,
+                      help="Output configuration file, defaults to standard "
+                           "output")
 
     parser.add_option('-M', '--memory', dest="total_memory", default=None,
-                      help="Total system memory, in bytes.  Will attempt to detect if unspecified")
+                      help="Total system memory, in bytes.  Will attempt to "
+                           "detect if unspecified")
 
     parser.add_option('-T', '--type', dest="db_type", default="Mixed",
-                      help="Database type, defaults to Mixed.  Valid options are DW, OLTP, Web, Mixed, Desktop")
+                      help="Database type, defaults to Mixed.  Valid options "
+                           "are DW, OLTP, Web, Mixed, Desktop")
     parser.add_option('-v', '--version', dest="pg_version", default="8.4",
-                      help="Set the version to determine what config is to be used")
+                      help="Set the version to determine what config is to be "
+                           "used")
 
     parser.add_option('-c', '--connections', dest="connections", default=None,
-                      help="Maximum number of expected connections, default depends on database type")
+                      help="Maximum number of expected connections, default "
+                           "depends on database type")
 
     parser.add_option('-D', '--debug', action="store_true", dest="debug",
                       default="False", help="Enable debugging mode")
 
     parser.add_option('-S', '--settings', dest="settings_dir", default=None,
-                      help="Directory where settings data files are located at.  Defaults to the directory where the script is being run from")
+                      help="Directory where settings data files are located "
+                           "at.  Defaults to the directory where the script "
+                           "is being run from")
 
     parser.add_option('--doctest', help='run doctests', action='store_true')
     options, args = parser.parse_args(program_args)
 
     # If a single regular parameter is passed, assume it's the input file
-    if options.input_config is None and len(args)>1:
-        options.input_config=args[1]
+    if options.input_config is None and len(args) > 1:
+        options.input_config = args[1]
 
-    if options.debug == True:
-        print "Command line options:  ",options
-        print "Command line arguments:  ",args
+    if options.debug:
+        print("Command line options:  ", options)
+        print("Command line arguments:  ", args)
 
     return options, args, parser
 
@@ -603,27 +658,29 @@ def main(program_args):
 
     if options.doctest:
         import doctest
+
         doctest.testmod()
-        return(0)
+        return (0)
 
     configFile = options.input_config
     if configFile is None:
-        print >> sys.stderr,"Can't do anything without an input config file; try --help"
+        sys.stderr.write("Can't do anything without an input config file; try "
+                         "--help\n")
         parser.print_help()
-        return(1)
+        return (1)
 
     config = PGConfigFile(configFile)
     config.read_config_file()
 
-    if options.debug == True:
+    if options.debug:
         config.debug_print_input()
-        print
+        print()
         config.debug_print_settings()
 
     if options.settings_dir is None:
         options.settings_dir = os.path.abspath(os.path.dirname(sys.argv[0]))
 
-    settings = PGSettings(options.settings_dir,options.pg_version)
+    settings = PGSettings(options.settings_dir, options.pg_version)
     settings.read_config_file()
     config.store_settings(settings)
 
@@ -636,6 +693,7 @@ def main(program_args):
         fout = open(output_file_name, 'w')
 
     config.write(fout)
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))

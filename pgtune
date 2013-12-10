@@ -6,6 +6,7 @@ Sample usage shown by running with "--help"
 
 Copyright (c) 2009-2011, Gregory Smith
 """
+import subprocess
 import sys
 import os
 import datetime
@@ -54,17 +55,22 @@ KB_PER_GB = GB / KB
 
 
 def total_mem():
-    try:
-        if platform.system() == "Windows":
-            mem = Win32Memory()
-        else:
-            # Should work on other, more UNIX-ish platforms
-            physPages = os.sysconf("SC_PHYS_PAGES")
-            pageSize = os.sysconf("SC_PAGE_SIZE")
-            mem = physPages * pageSize
-        return mem
-    except:
-        return None
+    if platform.system() == "Windows":
+        mem = Win32Memory()
+    elif platform.system() == "Darwin":
+        try:
+            return int(subprocess.check_output('sysctl -n hw.memsize',
+                       shell=True))
+        except AttributeError:
+            # Python < 2.7
+            return int(os.system('sysctl -n hw.memsize'))
+
+    else:
+        # Should work on other, more UNIX-ish platforms
+        physPages = os.sysconf("SC_PHYS_PAGES")
+        pageSize = os.sysconf("SC_PAGE_SIZE")
+        mem = physPages * pageSize
+    return mem
 
 
 def binaryround(value):
